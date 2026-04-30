@@ -1,18 +1,18 @@
-# ich-habe-fertig
+# ich-habe-fertig ✅
 
-A simple desktop todo app written in C++17 with Qt6 Widgets and SQLite.
+A simple desktop todo app written in C++17 with Qt6 Widgets and SQLite. 📝
 
-## Features
+## Features ✨
 
-- Add / delete / inline-edit / complete todos
-- Per-item urgent flag, free-text category (hash-coloured row), due date
-- Notes editor with line-number gutter (debounced auto-save)
-- Sub-tasks (add / inline-edit / check / delete, hide-completed filter)
-- Image attachments (paste from clipboard or drag-from-file URLs); thumbnails;
+- ➕ Add / delete / inline-edit / complete todos
+- 🚨 Per-item urgent flag, 🏷️ free-text category (hash-coloured row), 📅 due date
+- 📝 Notes editor with line-number gutter (debounced auto-save)
+- ☑️ Sub-tasks (add / inline-edit / check / delete, hide-completed filter)
+- 🖼️ Image attachments (paste from clipboard or drag-from-file URLs); thumbnails;
   Ctrl+wheel zoom; double-click opens via external `vimiv`
-- Confetti celebration when an item is completed
+- 🎉 Confetti celebration when an item is completed
 
-## Build
+## Build 🔨
 
 Requires Qt6 (Widgets + Sql + Test) and CMake ≥ 3.21.
 
@@ -28,7 +28,7 @@ Outputs:
 
 For a fully static binary, point `CMAKE_PREFIX_PATH` at a static-built Qt6 and pass `-DBUILD_STATIC=ON`.
 
-## Run
+## Run 🚀
 
 ```sh
 ./build/ich-habe-fertig /path/to/data-dir   # explicit dir
@@ -37,6 +37,6 @@ For a fully static binary, point `CMAKE_PREFIX_PATH` at a static-built Qt6 and p
 
 All data is stored under the chosen directory: `todos.db` for the todo state and `images/<id>/` for attached images.
 
-## License
+## License 📜
 
 MIT — see [LICENSE](LICENSE).
