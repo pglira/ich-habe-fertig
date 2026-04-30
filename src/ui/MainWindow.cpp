@@ -567,10 +567,14 @@ void MainWindow::refreshDueColumn() {
 
 void MainWindow::onSubtaskAdd() {
     if (m_currentId.isEmpty()) return;
-    bool ok = false;
-    QString text = QInputDialog::getText(this, "Add sub-task", "Text:",
-                                         QLineEdit::Normal, QString(), &ok);
-    if (!ok) return;
+    QInputDialog dlg(this);
+    dlg.setWindowTitle("Add sub-task");
+    dlg.setLabelText("Text:");
+    dlg.setInputMode(QInputDialog::TextInput);
+    dlg.setTextEchoMode(QLineEdit::Normal);
+    dlg.resize(640, dlg.sizeHint().height());
+    if (dlg.exec() != QDialog::Accepted) return;
+    QString text = dlg.textValue();
     text = text.trimmed();
     if (text.isEmpty()) return;
     m_store->addSubtask(m_currentId, text);

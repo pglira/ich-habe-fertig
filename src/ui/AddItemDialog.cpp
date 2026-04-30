@@ -22,7 +22,7 @@ AddItemDialog::AddItemDialog(QWidget *parent) : QDialog(parent) {
         }
         accept();
     });
-    resize(360, 100);
+    resize(640, 100);
 }
 
 QString AddItemDialog::text() const { return m_edit->text().trimmed(); }
