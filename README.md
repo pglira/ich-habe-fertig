@@ -1,11 +1,6 @@
 # ich-habe-fertig
 
-C++/Qt6 port of [`do-re-mi-fa-so-la-si-done`](../do-re-mi-fa-so-la-si-done) — a simple desktop todo app.
-
-Behavior-equivalent to the original, with these intentional differences:
-
-- Storage is **SQLite** (`todos.db`) instead of JSONL.
-- UI layout is idiomatic Qt/C++ — same features, not pixel-faithful.
+A simple desktop todo app written in C++17 with Qt6 Widgets and SQLite.
 
 ## Features
 
@@ -29,7 +24,6 @@ cmake --build build -j
 Outputs:
 
 - `build/ich-habe-fertig` — the GUI app
-- `build/migrate-jsonl` — one-shot importer (see below)
 - `build/tests/test_todo_store` — unit tests (`ctest --test-dir build`)
 
 For a fully static binary, point `CMAKE_PREFIX_PATH` at a static-built Qt6 and pass `-DBUILD_STATIC=ON`.
@@ -41,16 +35,7 @@ For a fully static binary, point `CMAKE_PREFIX_PATH` at a static-built Qt6 and p
 ./build/ich-habe-fertig                      # opens directory chooser
 ```
 
-## Importing data from the Python app
-
-The Python app stores todos in `todos.jsonl`. Import them into a SQLite store with:
-
-```sh
-./build/migrate-jsonl /path/to/python-data-dir            # writes todos.db in-place
-./build/migrate-jsonl /path/to/source /path/to/dest       # or to a separate dir
-```
-
-The original `todos.jsonl` is left untouched. The `images/<id>/` layout is unchanged, so existing image attachments are picked up directly.
+All data is stored under the chosen directory: `todos.db` for the todo state and `images/<id>/` for attached images.
 
 ## License
 

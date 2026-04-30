@@ -43,9 +43,6 @@ target_link_libraries(ich_habe_fertig_core PUBLIC Qt6::Widgets Qt6::Sql)
 add_executable(ich-habe-fertig src/main.cpp)
 target_link_libraries(ich-habe-fertig PRIVATE ich_habe_fertig_core)
 
-add_executable(migrate-jsonl src/migrate.cpp)
-target_link_libraries(migrate-jsonl PRIVATE ich_habe_fertig_core)
-
 if(WIN32)
     set_target_properties(ich-habe-fertig PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
