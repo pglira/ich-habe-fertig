@@ -124,7 +124,6 @@ void MainWindow::buildUi() {
     m_tree->setStyleSheet(
         "QTreeView { outline: 0; }"
         "QTreeView::item { padding: 3px 2px; }"
-        "QTreeView::indicator { background: palette(base); border: 1px solid white; }"
     );
     connect(m_tree, &QTreeWidget::itemSelectionChanged, this, &MainWindow::onSelectionChanged);
     connect(m_tree, &QTreeWidget::itemChanged, this, &MainWindow::onListItemChanged);
@@ -212,7 +211,6 @@ void MainWindow::buildUi() {
     m_subtasks->setStyleSheet(
         "QListView { outline: 0; }"
         "QListView::item { padding: 3px 2px; }"
-        "QListView::indicator { background: palette(base); border: 1px solid white; }"
     );
     connect(m_subtasks, &QListWidget::itemChanged, this, &MainWindow::onSubtaskItemChanged);
     subLay->addWidget(m_subtasks, 1);
