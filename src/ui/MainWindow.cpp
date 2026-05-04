@@ -302,7 +302,7 @@ void MainWindow::applyRowStyle(QTreeWidgetItem *row, const TodoItem &item) {
         else row->setBackground(c, QBrush());
     }
     if (item.urgent) {
-        QFont urgentFont = row->font(1);
+        QFont urgentFont = m_tree->font();
         urgentFont.setBold(true);
         urgentFont.setPointSizeF(urgentFont.pointSizeF() * 1.4);
         row->setFont(1, urgentFont);
@@ -310,6 +310,7 @@ void MainWindow::applyRowStyle(QTreeWidgetItem *row, const TodoItem &item) {
         row->setText(1, QStringLiteral("!"));
         row->setTextAlignment(1, Qt::AlignCenter);
     } else {
+        row->setFont(1, m_tree->font());
         row->setText(1, QString());
     }
 }
