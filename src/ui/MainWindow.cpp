@@ -477,6 +477,8 @@ void MainWindow::onAdd() {
     if (title.isEmpty()) return;
     auto created = m_store->add(title);
     refreshList(created.id);
+    loadDetail(created.id);
+    QTimer::singleShot(0, this, [this]() { m_notes->setFocus(); });
 }
 
 void MainWindow::onDelete() {
