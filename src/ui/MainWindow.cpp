@@ -38,11 +38,8 @@ namespace {
 const int kNotesDebounceMs = 300;
 const int kCategoryDebounceMs = 300;
 const int kDueRefreshMs = 60 * 1000;
-
-const char *kPaletteColors[] = {
-    "#2c3e50", "#34495e", "#3b3f4a", "#4a3b52",
-    "#3a4a3c", "#523f3b", "#3a4852", "#42384a",
-};
+const int kCategoryHslSaturation = 90;
+const int kCategoryHslLightness = 70;
 
 QString fmtDateTime(const QDateTime &dt) {
     if (!dt.isValid()) return QStringLiteral("—");
@@ -303,8 +300,8 @@ QString MainWindow::currentSelectedId() const {
 QColor MainWindow::categoryColor(const QString &category) const {
     if (category.isEmpty()) return {};
     QByteArray hash = QCryptographicHash::hash(category.toUtf8(), QCryptographicHash::Md5);
-    int idx = static_cast<unsigned char>(hash[0]) % (int)(sizeof(kPaletteColors) / sizeof(kPaletteColors[0]));
-    return QColor(kPaletteColors[idx]);
+    int hue = static_cast<unsigned char>(hash[0]) * 360 / 256;
+    return QColor::fromHsl(hue, kCategoryHslSaturation, kCategoryHslLightness);
 }
 
 QString MainWindow::dueInText(const QDateTime &dueAt) const {
