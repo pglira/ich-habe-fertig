@@ -6,6 +6,7 @@
 #include "NotesEditor.h"
 #include "ThumbnailListWidget.h"
 
+#include <QApplication>
 #include <QCheckBox>
 #include <QCryptographicHash>
 #include <QDateEdit>
@@ -21,6 +22,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
+#include <QPainter>
 #include <QPixmap>
 #include <QProcess>
 #include <QPushButton>
@@ -47,14 +49,54 @@ QString fmtDateTime(const QDateTime &dt) {
     return dt.toLocalTime().toString("yyyy-MM-dd HH:mm");
 }
 
+QString itemViewQss(const char *view) {
+    return QStringLiteral(
+        "%1 { outline: 0; }"
+        "%1::item { padding: 3px 2px; }"
+        "%1::indicator {"
+        "  width: 14px; height: 14px;"
+        "  border: 1px solid palette(text);"
+        "  border-radius: 2px;"
+        "  background: palette(base);"
+        "}"
+        "%1::indicator:checked {"
+        "  background: palette(highlight);"
+        "  border-color: palette(highlight);"
+        "}"
+    ).arg(QLatin1String(view));
+}
+
 class NoFocusDelegate : public QStyledItemDelegate {
 public:
     using QStyledItemDelegate::QStyledItemDelegate;
     void paint(QPainter *p, const QStyleOptionViewItem &option,
                const QModelIndex &index) const override {
         QStyleOptionViewItem opt = option;
+        initStyleOption(&opt, index);
         opt.state &= ~QStyle::State_HasFocus;
-        QStyledItemDelegate::paint(p, opt, index);
+        const QWidget *w = opt.widget;
+        QStyle *style = w ? w->style() : QApplication::style();
+        style->drawControl(QStyle::CE_ItemViewItem, &opt, p, w);
+        if ((opt.features & QStyleOptionViewItem::HasCheckIndicator)
+            && opt.checkState == Qt::Checked) {
+            const QRect r = style->subElementRect(QStyle::SE_ItemViewItemCheckIndicator, &opt, w);
+            if (!r.isEmpty()) {
+                const QPointF tl = r.topLeft();
+                const QPolygonF check{{
+                    tl + QPointF(r.width() * 0.22, r.height() * 0.52),
+                    tl + QPointF(r.width() * 0.42, r.height() * 0.72),
+                    tl + QPointF(r.width() * 0.78, r.height() * 0.28),
+                }};
+                QPen pen(opt.palette.color(QPalette::HighlightedText), 2);
+                pen.setCapStyle(Qt::RoundCap);
+                pen.setJoinStyle(Qt::RoundJoin);
+                p->save();
+                p->setRenderHint(QPainter::Antialiasing);
+                p->setPen(pen);
+                p->drawPolyline(check);
+                p->restore();
+            }
+        }
     }
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
                           const QModelIndex &index) const override {
@@ -121,10 +163,7 @@ void MainWindow::buildUi() {
     m_tree->header()->resizeSection(4, 110);
     m_tree->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
     m_tree->setItemDelegate(new NoFocusDelegate(m_tree));
-    m_tree->setStyleSheet(
-        "QTreeView { outline: 0; }"
-        "QTreeView::item { padding: 3px 2px; }"
-    );
+    m_tree->setStyleSheet(itemViewQss("QTreeView"));
     connect(m_tree, &QTreeWidget::itemSelectionChanged, this, &MainWindow::onSelectionChanged);
     connect(m_tree, &QTreeWidget::itemChanged, this, &MainWindow::onListItemChanged);
     connect(m_tree, &QTreeWidget::itemDoubleClicked, this, &MainWindow::onListItemDoubleClicked);
@@ -208,10 +247,7 @@ void MainWindow::buildUi() {
     m_subtasks = new QListWidget;
     m_subtasks->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
     m_subtasks->setItemDelegate(new NoFocusDelegate(m_subtasks));
-    m_subtasks->setStyleSheet(
-        "QListView { outline: 0; }"
-        "QListView::item { padding: 3px 2px; }"
-    );
+    m_subtasks->setStyleSheet(itemViewQss("QListView"));
     connect(m_subtasks, &QListWidget::itemChanged, this, &MainWindow::onSubtaskItemChanged);
     subLay->addWidget(m_subtasks, 1);
     auto *subBtns = new QHBoxLayout;
