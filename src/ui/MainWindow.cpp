@@ -693,7 +693,7 @@ void MainWindow::onImageDoubleClicked(QListWidgetItem *item) {
         QMessageBox::warning(this, "Missing", "Image file not found:\n" + abs);
         return;
     }
-    if (!QProcess::startDetached("vimiv", {abs})) {
-        QMessageBox::critical(this, "Launch failed", "Could not launch 'vimiv'. Is it installed?");
+    if (!QProcess::startDetached("cheder", {abs})) {
+        QMessageBox::critical(this, "Launch failed", "Could not launch 'cheder'. Is it installed?");
     }
 }

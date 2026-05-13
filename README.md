@@ -9,7 +9,7 @@ A simple desktop todo app written in C++17 with Qt6 Widgets and SQLite. 📝
 - 📝 Notes editor with line-number gutter (debounced auto-save)
 - ☑️ Sub-tasks (add / inline-edit / check / delete, hide-completed filter)
 - 🖼️ Image attachments (paste from clipboard or drag-from-file URLs); thumbnails;
-  Ctrl+wheel zoom; double-click opens via external `vimiv`
+  Ctrl+wheel zoom; double-click opens via external `cheder`
 - 🎉 Confetti celebration when an item is completed
 
 ## Build
