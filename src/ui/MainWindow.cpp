@@ -10,6 +10,7 @@
 #include <QCheckBox>
 #include <QCryptographicHash>
 #include <QDateEdit>
+#include <QDateTimeEdit>
 #include <QDir>
 #include <QFile>
 #include <QFormLayout>
@@ -176,9 +177,17 @@ void MainWindow::buildUi() {
     connect(m_categoryEdit, &QLineEdit::textEdited, this, &MainWindow::onCategoryEdited);
     form->addRow("Category:", m_categoryEdit);
 
-    m_createdLabel = new QLabel("—");
-    m_createdLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    form->addRow("Created:", m_createdLabel);
+    auto *createdRow = new QHBoxLayout;
+    m_createdEdit = new QDateTimeEdit;
+    m_createdEdit->setCalendarPopup(true);
+    m_createdEdit->setDisplayFormat("yyyy-MM-dd HH:mm");
+    m_createdEdit->setDateTime(QDateTime::currentDateTime());
+    m_createdSetBtn = new QPushButton("Set");
+    connect(m_createdSetBtn, &QPushButton::clicked, this, &MainWindow::onCreatedSet);
+    createdRow->addWidget(m_createdEdit, 1);
+    createdRow->addWidget(m_createdSetBtn);
+    auto *createdWrap = new QWidget; createdWrap->setLayout(createdRow);
+    form->addRow("Created:", createdWrap);
     m_completedLabel = new QLabel("—");
     m_completedLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     form->addRow("Completed:", m_completedLabel);
@@ -430,7 +439,7 @@ void MainWindow::clearDetail() {
     m_loadingDetail = true;
     m_urgentBox->setChecked(false);
     m_categoryEdit->clear();
-    m_createdLabel->setText("—");
+    m_createdEdit->setDateTime(QDateTime::currentDateTime());
     m_completedLabel->setText("—");
     m_dueEdit->setDate(QDate::currentDate());
     m_notes->clear();
@@ -439,7 +448,9 @@ void MainWindow::clearDetail() {
     m_loadingDetail = false;
 
     bool en = false;
-    for (auto *w : {(QWidget*)m_urgentBox, (QWidget*)m_categoryEdit, (QWidget*)m_dueEdit,
+    for (auto *w : {(QWidget*)m_urgentBox, (QWidget*)m_categoryEdit,
+                    (QWidget*)m_createdEdit, (QWidget*)m_createdSetBtn,
+                    (QWidget*)m_dueEdit,
                     (QWidget*)m_dueSetBtn, (QWidget*)m_dueClearBtn,
                     (QWidget*)m_notes, (QWidget*)m_subtasks, (QWidget*)m_images,
                     (QWidget*)m_subAddBtn, (QWidget*)m_subDelBtn,
@@ -459,7 +470,8 @@ void MainWindow::loadDetail(const QString &id) {
 
     m_urgentBox->setChecked(found->urgent);
     m_categoryEdit->setText(found->category);
-    m_createdLabel->setText(fmtDateTime(found->createdAt));
+    if (found->createdAt.isValid()) m_createdEdit->setDateTime(found->createdAt.toLocalTime());
+    else m_createdEdit->setDateTime(QDateTime::currentDateTime());
     m_completedLabel->setText(fmtDateTime(found->completedAt));
     if (found->dueAt.isValid()) m_dueEdit->setDate(found->dueAt.date());
     else m_dueEdit->setDate(QDate::currentDate());
@@ -492,7 +504,9 @@ void MainWindow::loadDetail(const QString &id) {
 
     m_loadingDetail = false;
 
-    for (auto *w : {(QWidget*)m_urgentBox, (QWidget*)m_categoryEdit, (QWidget*)m_dueEdit,
+    for (auto *w : {(QWidget*)m_urgentBox, (QWidget*)m_categoryEdit,
+                    (QWidget*)m_createdEdit, (QWidget*)m_createdSetBtn,
+                    (QWidget*)m_dueEdit,
                     (QWidget*)m_dueSetBtn, (QWidget*)m_dueClearBtn,
                     (QWidget*)m_notes, (QWidget*)m_subtasks, (QWidget*)m_images,
                     (QWidget*)m_subAddBtn, (QWidget*)m_subDelBtn,
@@ -564,6 +578,15 @@ void MainWindow::onCategoryEdited(const QString &) {
 void MainWindow::persistCategory() {
     if (m_currentId.isEmpty()) return;
     if (m_store->setCategory(m_currentId, m_categoryEdit->text())) updateRowFor(m_currentId);
+}
+
+void MainWindow::onCreatedSet() {
+    if (m_currentId.isEmpty()) return;
+    QDateTime created = m_createdEdit->dateTime();
+    created.setTimeSpec(Qt::LocalTime);
+    if (m_store->setCreatedAt(m_currentId, created.toUTC())) {
+        refreshList(m_currentId);
+    }
 }
 
 void MainWindow::onDueSet() {

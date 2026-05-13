@@ -7,6 +7,7 @@
 
 class QCheckBox;
 class QDateEdit;
+class QDateTimeEdit;
 class QLabel;
 class QLineEdit;
 class QListWidget;
@@ -39,6 +40,7 @@ private slots:
     void persistCategory();
     void onDueSet();
     void onDueClear();
+    void onCreatedSet();
     void onHideCompletedToggled(bool checked);
     void onNotesChanged();
     void persistNotes();
@@ -76,7 +78,8 @@ private:
 
     QCheckBox *m_urgentBox = nullptr;
     QLineEdit *m_categoryEdit = nullptr;
-    QLabel *m_createdLabel = nullptr;
+    QDateTimeEdit *m_createdEdit = nullptr;
+    QPushButton *m_createdSetBtn = nullptr;
     QLabel *m_completedLabel = nullptr;
     QDateEdit *m_dueEdit = nullptr;
     QPushButton *m_dueSetBtn = nullptr;

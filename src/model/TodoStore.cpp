@@ -142,7 +142,7 @@ QList<TodoItem> TodoStore::load() const {
     QList<TodoItem> items;
     QSqlQuery q(m_db);
     if (!q.exec("SELECT id, text, notes, done, urgent, category, created_at, "
-                "completed_at, due_at FROM todos ORDER BY position ASC, created_at DESC")) {
+                "completed_at, due_at FROM todos ORDER BY created_at DESC, position ASC")) {
         return items;
     }
     while (q.next()) {
@@ -240,6 +240,22 @@ bool TodoStore::setCategory(const QString &id, const QString &category) {
     QSqlQuery q(m_db);
     q.prepare("UPDATE todos SET category = ? WHERE id = ?");
     q.addBindValue(category);
+    q.addBindValue(id);
+    return q.exec();
+}
+
+bool TodoStore::setCreatedAt(const QString &id, const QDateTime &createdAt) {
+    if (!createdAt.isValid()) return false;
+    QSqlQuery cur(m_db);
+    cur.prepare("SELECT created_at FROM todos WHERE id = ?");
+    cur.addBindValue(id);
+    if (!cur.exec() || !cur.next()) return false;
+    QDateTime existing = parseUtc(cur.value(0));
+    QDateTime norm = createdAt.toUTC();
+    if (existing == norm) return false;
+    QSqlQuery q(m_db);
+    q.prepare("UPDATE todos SET created_at = ? WHERE id = ?");
+    q.addBindValue(isoOrNull(norm));
     q.addBindValue(id);
     return q.exec();
 }

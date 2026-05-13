@@ -28,6 +28,7 @@ public:
     bool setUrgent(const QString &id, bool urgent);
     bool setCategory(const QString &id, const QString &category);
     bool setDueAt(const QString &id, const QDateTime &dueAt);
+    bool setCreatedAt(const QString &id, const QDateTime &createdAt);
 
     bool addImage(const QString &id, const QString &relPath);
     bool removeImage(const QString &id, const QString &relPath);
