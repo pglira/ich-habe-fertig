@@ -25,7 +25,6 @@ public:
     bool setDone(const QString &id, bool done);
     bool markCompleted(const QString &id) { return setDone(id, true); }
 
-    bool setUrgent(const QString &id, bool urgent);
     bool setCategory(const QString &id, const QString &category);
     bool setDueAt(const QString &id, const QDateTime &dueAt);
     bool setCreatedAt(const QString &id, const QDateTime &createdAt);

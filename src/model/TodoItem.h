@@ -17,7 +17,6 @@ struct TodoItem {
     QString text;
     QString notes;
     bool done = false;
-    bool urgent = false;
     QString category;
     QDateTime createdAt;     // UTC
     QDateTime completedAt;   // UTC; null if !done

@@ -35,7 +35,6 @@ private slots:
     void onSelectionChanged();
     void onListItemChanged(QTreeWidgetItem *item, int column);
     void onListItemDoubleClicked(QTreeWidgetItem *item, int column);
-    void onUrgentToggled(bool checked);
     void onCategoryEdited(const QString &);
     void persistCategory();
     void onDueSet();
@@ -76,7 +75,6 @@ private:
     QPushButton *m_deleteBtn = nullptr;
     QCheckBox *m_hideCompleted = nullptr;
 
-    QCheckBox *m_urgentBox = nullptr;
     QLineEdit *m_categoryEdit = nullptr;
     QDateTimeEdit *m_createdEdit = nullptr;
     QPushButton *m_createdSetBtn = nullptr;

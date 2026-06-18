@@ -59,7 +59,6 @@ void TodoStore::ensureSchema() {
         text         TEXT NOT NULL,
         notes        TEXT NOT NULL DEFAULT '',
         done         INTEGER NOT NULL DEFAULT 0,
-        urgent       INTEGER NOT NULL DEFAULT 0,
         category     TEXT NOT NULL DEFAULT '',
         created_at   TEXT NOT NULL,
         completed_at TEXT,
@@ -103,7 +102,7 @@ QString TodoStore::resolveDataPath(const QString &relPath) const {
 
 std::optional<TodoItem> TodoStore::get(const QString &id) const {
     QSqlQuery q(m_db);
-    q.prepare("SELECT id, text, notes, done, urgent, category, created_at, "
+    q.prepare("SELECT id, text, notes, done, category, created_at, "
               "completed_at, due_at FROM todos WHERE id = ?");
     q.addBindValue(id);
     if (!q.exec() || !q.next()) return std::nullopt;
@@ -112,11 +111,10 @@ std::optional<TodoItem> TodoStore::get(const QString &id) const {
     it.text = q.value(1).toString();
     it.notes = q.value(2).toString();
     it.done = q.value(3).toBool();
-    it.urgent = q.value(4).toBool();
-    it.category = q.value(5).toString();
-    it.createdAt = parseUtc(q.value(6));
-    it.completedAt = parseUtc(q.value(7));
-    it.dueAt = normalizeDueAt(parseUtc(q.value(8)));
+    it.category = q.value(4).toString();
+    it.createdAt = parseUtc(q.value(5));
+    it.completedAt = parseUtc(q.value(6));
+    it.dueAt = normalizeDueAt(parseUtc(q.value(7)));
 
     QSqlQuery iq(m_db);
     iq.prepare("SELECT rel_path FROM images WHERE todo_id = ? ORDER BY ord ASC");
@@ -141,7 +139,7 @@ std::optional<TodoItem> TodoStore::get(const QString &id) const {
 QList<TodoItem> TodoStore::load() const {
     QList<TodoItem> items;
     QSqlQuery q(m_db);
-    if (!q.exec("SELECT id, text, notes, done, urgent, category, created_at, "
+    if (!q.exec("SELECT id, text, notes, done, category, created_at, "
                 "completed_at, due_at FROM todos ORDER BY created_at DESC, position ASC")) {
         return items;
     }
@@ -151,11 +149,10 @@ QList<TodoItem> TodoStore::load() const {
         it.text = q.value(1).toString();
         it.notes = q.value(2).toString();
         it.done = q.value(3).toBool();
-        it.urgent = q.value(4).toBool();
-        it.category = q.value(5).toString();
-        it.createdAt = parseUtc(q.value(6));
-        it.completedAt = parseUtc(q.value(7));
-        it.dueAt = normalizeDueAt(parseUtc(q.value(8)));
+        it.category = q.value(4).toString();
+        it.createdAt = parseUtc(q.value(5));
+        it.completedAt = parseUtc(q.value(6));
+        it.dueAt = normalizeDueAt(parseUtc(q.value(7)));
         if (it.id.isEmpty() || it.text.isEmpty()) continue;
         items.append(it);
     }
@@ -189,9 +186,9 @@ TodoItem TodoStore::add(const QString &text, const QString &notes) {
     if (minQ.next()) newPos = minQ.value(0).toInt() - 1;
 
     QSqlQuery q(m_db);
-    q.prepare("INSERT INTO todos (id, text, notes, done, urgent, category, "
+    q.prepare("INSERT INTO todos (id, text, notes, done, category, "
               "created_at, completed_at, due_at, position) "
-              "VALUES (?, ?, ?, 0, 0, '', ?, NULL, NULL, ?)");
+              "VALUES (?, ?, ?, 0, '', ?, NULL, NULL, ?)");
     q.addBindValue(item.id);
     q.addBindValue(item.text);
     q.addBindValue(item.notes.isNull() ? QString("") : item.notes);
@@ -214,19 +211,6 @@ bool TodoStore::setDone(const QString &id, bool done) {
     q.prepare("UPDATE todos SET done = ?, completed_at = ? WHERE id = ?");
     q.addBindValue(done ? 1 : 0);
     q.addBindValue(done ? isoOrNull(utcNow()) : QVariant(QMetaType(QMetaType::QString)));
-    q.addBindValue(id);
-    return q.exec();
-}
-
-bool TodoStore::setUrgent(const QString &id, bool urgent) {
-    QSqlQuery cur(m_db);
-    cur.prepare("SELECT urgent FROM todos WHERE id = ?");
-    cur.addBindValue(id);
-    if (!cur.exec() || !cur.next()) return false;
-    if (cur.value(0).toBool() == urgent) return false;
-    QSqlQuery q(m_db);
-    q.prepare("UPDATE todos SET urgent = ? WHERE id = ?");
-    q.addBindValue(urgent ? 1 : 0);
     q.addBindValue(id);
     return q.exec();
 }

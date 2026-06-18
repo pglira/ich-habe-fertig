@@ -5,7 +5,7 @@ A simple desktop todo app written in C++17 with Qt6 Widgets and SQLite. 📝
 ## Features
 
 - ➕ Add / delete / inline-edit / complete todos
-- 🚨 Per-item urgent flag, 🏷️ free-text category (hash-coloured row), 📅 due date
+- 🏷️ Free-text category (hash-coloured row), 📅 due date
 - 📝 Notes editor with line-number gutter (debounced auto-save)
 - ☑️ Sub-tasks (add / inline-edit / check / delete, hide-completed filter)
 - 🖼️ Image attachments (paste from clipboard or drag-from-file URLs); thumbnails;

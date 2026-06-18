@@ -32,7 +32,6 @@ TodoItem TodoItem::create(const QString &text, const QString &notes) {
     item.text = text.trimmed();
     item.notes = notes;
     item.done = false;
-    item.urgent = false;
     item.createdAt = utcNow();
     return item;
 }

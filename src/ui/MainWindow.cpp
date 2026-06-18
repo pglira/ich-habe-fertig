@@ -98,7 +98,7 @@ public:
     }
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
                           const QModelIndex &index) const override {
-        // Read-only columns in the todo tree: 1 = urgent, 2 = category, 4 = due-in
+        // Read-only columns in the todo tree: 1 = subtask count, 2 = category, 4 = due-in
         int c = index.column();
         if (c == 1 || c == 2 || c == 4) return nullptr;
         return QStyledItemDelegate::createEditor(parent, option, index);
@@ -155,7 +155,7 @@ void MainWindow::buildUi() {
     m_tree->setHeaderLabels({"", "", "Category", "Title", "Due"});
     m_tree->header()->setStretchLastSection(false);
     m_tree->header()->resizeSection(0, 30);
-    m_tree->header()->resizeSection(1, 26);
+    m_tree->header()->resizeSection(1, 44);
     m_tree->header()->resizeSection(2, 130);
     m_tree->header()->setSectionResizeMode(3, QHeaderView::Stretch);
     m_tree->header()->resizeSection(4, 110);
@@ -169,10 +169,6 @@ void MainWindow::buildUi() {
 
     auto *meta = new QGroupBox("Details");
     auto *form = new QFormLayout(meta);
-    m_urgentBox = new QCheckBox("Urgent");
-    connect(m_urgentBox, &QCheckBox::toggled, this, &MainWindow::onUrgentToggled);
-    form->addRow(m_urgentBox);
-
     m_categoryEdit = new QLineEdit;
     connect(m_categoryEdit, &QLineEdit::textEdited, this, &MainWindow::onCategoryEdited);
     form->addRow("Category:", m_categoryEdit);
@@ -343,18 +339,6 @@ void MainWindow::applyRowStyle(QTreeWidgetItem *row, const TodoItem &item) {
         if (bg.isValid()) row->setBackground(c, bg);
         else row->setBackground(c, QBrush());
     }
-    if (item.urgent) {
-        QFont urgentFont = m_tree->font();
-        urgentFont.setBold(true);
-        urgentFont.setPointSizeF(urgentFont.pointSizeF() * 1.4);
-        row->setFont(1, urgentFont);
-        row->setForeground(1, QColor("#d32f2f"));
-        row->setText(1, QStringLiteral("!"));
-        row->setTextAlignment(1, Qt::AlignCenter);
-    } else {
-        row->setFont(1, m_tree->font());
-        row->setText(1, QString());
-    }
 }
 
 void MainWindow::populateRow(QTreeWidgetItem *row, const TodoItem &item) {
@@ -363,6 +347,12 @@ void MainWindow::populateRow(QTreeWidgetItem *row, const TodoItem &item) {
     row->setCheckState(0, item.done ? Qt::Checked : Qt::Unchecked);
     row->setTextAlignment(0, Qt::AlignCenter);
     row->setTextAlignment(1, Qt::AlignCenter);
+    int subtaskTotal = item.subtasks.size();
+    int subtaskOpen = 0;
+    for (const auto &s : item.subtasks) if (!s.done) ++subtaskOpen;
+    row->setText(1, subtaskTotal > 0
+                        ? QStringLiteral("%1/%2").arg(subtaskOpen).arg(subtaskTotal)
+                        : QString());
     row->setText(2, item.category);
     row->setText(3, item.text);
     row->setText(4, dueInText(item.dueAt));
@@ -437,7 +427,6 @@ void MainWindow::onSelectionChanged() {
 void MainWindow::clearDetail() {
     m_currentId.clear();
     m_loadingDetail = true;
-    m_urgentBox->setChecked(false);
     m_categoryEdit->clear();
     m_createdEdit->setDateTime(QDateTime::currentDateTime());
     m_completedLabel->setText("—");
@@ -448,7 +437,7 @@ void MainWindow::clearDetail() {
     m_loadingDetail = false;
 
     bool en = false;
-    for (auto *w : {(QWidget*)m_urgentBox, (QWidget*)m_categoryEdit,
+    for (auto *w : {(QWidget*)m_categoryEdit,
                     (QWidget*)m_createdEdit, (QWidget*)m_createdSetBtn,
                     (QWidget*)m_dueEdit,
                     (QWidget*)m_dueSetBtn, (QWidget*)m_dueClearBtn,
@@ -468,7 +457,6 @@ void MainWindow::loadDetail(const QString &id) {
     m_currentId = id;
     m_loadingDetail = true;
 
-    m_urgentBox->setChecked(found->urgent);
     m_categoryEdit->setText(found->category);
     if (found->createdAt.isValid()) m_createdEdit->setDateTime(found->createdAt.toLocalTime());
     else m_createdEdit->setDateTime(QDateTime::currentDateTime());
@@ -504,7 +492,7 @@ void MainWindow::loadDetail(const QString &id) {
 
     m_loadingDetail = false;
 
-    for (auto *w : {(QWidget*)m_urgentBox, (QWidget*)m_categoryEdit,
+    for (auto *w : {(QWidget*)m_categoryEdit,
                     (QWidget*)m_createdEdit, (QWidget*)m_createdSetBtn,
                     (QWidget*)m_dueEdit,
                     (QWidget*)m_dueSetBtn, (QWidget*)m_dueClearBtn,
@@ -563,11 +551,6 @@ void MainWindow::onListItemChanged(QTreeWidgetItem *item, int column) {
 
 void MainWindow::onListItemDoubleClicked(QTreeWidgetItem *item, int column) {
     if (column == 3) m_tree->editItem(item, 3);
-}
-
-void MainWindow::onUrgentToggled(bool checked) {
-    if (m_loadingDetail || m_currentId.isEmpty()) return;
-    if (m_store->setUrgent(m_currentId, checked)) updateRowFor(m_currentId);
 }
 
 void MainWindow::onCategoryEdited(const QString &) {
@@ -636,6 +619,7 @@ void MainWindow::onSubtaskAdd() {
     if (text.isEmpty()) return;
     m_store->addSubtask(m_currentId, text);
     loadDetail(m_currentId);
+    updateRowFor(m_currentId);
 }
 
 void MainWindow::onSubtaskDelete() {
@@ -645,6 +629,7 @@ void MainWindow::onSubtaskDelete() {
     QString sid = sel.first()->data(Qt::UserRole).toString();
     m_store->deleteSubtask(m_currentId, sid);
     loadDetail(m_currentId);
+    updateRowFor(m_currentId);
 }
 
 void MainWindow::onSubtaskItemChanged(QListWidgetItem *item) {
@@ -661,6 +646,7 @@ void MainWindow::onSubtaskItemChanged(QListWidgetItem *item) {
             m_celebration->setGeometry(rect());
             m_celebration->trigger();
         }
+        updateRowFor(id);
         if (id == m_currentId) loadDetail(id);
     });
 }

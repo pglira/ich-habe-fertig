@@ -19,8 +19,6 @@ private slots:
     void addAndRemoveImage();
     void deleteRemovesImageDir();
     void deleteItem();
-    void urgentDefaultFalse();
-    void setAndUnsetUrgent();
     void duePersistedAndNormalized();
     void dueSetAndClear();
     void addSubtask();
@@ -150,24 +148,6 @@ void TestTodoStore::deleteItem() {
     auto c = s.add("Task", "");
     QVERIFY(s.deleteItem(c.id));
     QCOMPARE(s.load().size(), 0);
-}
-
-void TestTodoStore::urgentDefaultFalse() {
-    QTemporaryDir d;
-    TodoStore s(d.path());
-    auto c = s.add("Urgent task", "");
-    QVERIFY(!c.urgent);
-    QVERIFY(!s.load()[0].urgent);
-}
-
-void TestTodoStore::setAndUnsetUrgent() {
-    QTemporaryDir d;
-    TodoStore s(d.path());
-    auto c = s.add("Fix bug", "");
-    QVERIFY(s.setUrgent(c.id, true));
-    QVERIFY(s.load()[0].urgent);
-    QVERIFY(s.setUrgent(c.id, false));
-    QVERIFY(!s.load()[0].urgent);
 }
 
 void TestTodoStore::duePersistedAndNormalized() {
