@@ -26,8 +26,10 @@ pub struct TodoItem {
     pub notes: String,
     pub done: bool,
     pub category: String,
-    /// The hue (0..360) of the color of the category; `None` for no category.
+    /// The hue (0..360) of the automatic color of the category; `None` for no category.
     pub category_hue: Option<u16>,
+    /// The color `#rrggbb` that the user set for the category, if any.
+    pub category_color: Option<String>,
     pub created_at: Option<DateTime<Utc>>,
     pub completed_at: Option<DateTime<Utc>>,
     pub due_at: Option<NaiveDate>,
@@ -63,6 +65,11 @@ CREATE TABLE IF NOT EXISTS subtasks (
 );
 CREATE INDEX IF NOT EXISTS idx_subtasks_todo ON subtasks(todo_id);
 CREATE INDEX IF NOT EXISTS idx_images_todo ON images(todo_id);
+CREATE TABLE IF NOT EXISTS categories (
+    name     TEXT PRIMARY KEY,
+    color    TEXT,
+    archived INTEGER NOT NULL DEFAULT 0
+);
 ";
 
 const ITEM_COLUMNS: &str = "id, text, notes, done, category, created_at, completed_at, due_at";
@@ -115,9 +122,20 @@ pub fn category_hue(category: &str) -> Option<u16> {
     Some((hash[0] as u32 * 360 / 256) as u16)
 }
 
+/// Adds the columns that older versions of the schema do not have.
+fn migrate(conn: &Connection) -> Result<()> {
+    let has_archived = conn
+        .prepare("SELECT 1 FROM pragma_table_info('categories') WHERE name = 'archived'")?
+        .exists([])?;
+    if !has_archived {
+        conn.execute_batch("ALTER TABLE categories ADD COLUMN archived INTEGER NOT NULL DEFAULT 0")?;
+    }
+    Ok(())
+}
+
 pub struct TodoStore {
     dir: PathBuf,
-    conn: Connection,
+    pub(crate) conn: Connection,
 }
 
 impl TodoStore {
@@ -129,6 +147,7 @@ impl TodoStore {
         conn.pragma_update(None, "foreign_keys", "ON")?;
         conn.query_row("PRAGMA journal_mode = WAL", [], |_| Ok(()))?;
         conn.execute_batch(SCHEMA)?;
+        migrate(&conn)?;
         Ok(Self { dir, conn })
     }
 
@@ -165,6 +184,7 @@ impl TodoStore {
             notes: row.get(2)?,
             done: row.get::<_, i64>(3)? != 0,
             category_hue: category_hue(&category),
+            category_color: None,
             category,
             created_at: ts(5)?,
             completed_at: ts(6)?,
@@ -204,13 +224,14 @@ impl TodoStore {
             .filter_map(|r| r.ok())
             .filter(|it| !it.id.is_empty() && !it.text.is_empty())
             .collect();
+        let colors = self.category_colors()?;
         for it in &mut items {
             self.fill_children(it)?;
+            it.category_color = colors.get(&it.category).cloned();
         }
         Ok(items)
     }
 
-    #[cfg_attr(not(test), allow(dead_code))]
     pub fn get(&self, id: &str) -> Result<Option<TodoItem>> {
         let item = self
             .conn
@@ -219,6 +240,7 @@ impl TodoStore {
         match item {
             Some(mut it) => {
                 self.fill_children(&mut it)?;
+                it.category_color = self.category_colors()?.remove(&it.category);
                 Ok(Some(it))
             }
             None => Ok(None),
@@ -239,6 +261,7 @@ impl TodoStore {
             done: false,
             category: String::new(),
             category_hue: None,
+            category_color: None,
             created_at: Some(utc_now()),
             completed_at: None,
             due_at: None,
@@ -277,6 +300,7 @@ impl TodoStore {
     }
 
     pub fn set_category(&self, id: &str, category: &str) -> Result<bool> {
+        let category = category.trim();
         match self.column::<String>("category", id)? {
             Some(cur) if cur != category => {}
             _ => return Ok(false),

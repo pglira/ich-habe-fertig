@@ -3,7 +3,7 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { homeDir } from "@tauri-apps/api/path";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Tags, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Confetti, type ConfettiHandle } from "@/components/Confetti";
@@ -11,15 +11,17 @@ import { Details } from "@/components/Details";
 import { Images } from "@/components/Images";
 import { NotesEditor, type NotesEditorHandle } from "@/components/NotesEditor";
 import { ResizeHandle } from "@/components/ResizeHandle";
+import { CategoryManager } from "@/components/CategoryManager";
 import { Check, SectionHeader } from "@/components/Section";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { StartScreen } from "@/components/StartScreen";
 import { Subtasks } from "@/components/Subtasks";
-import { ConfirmDialog, TextPromptDialog } from "@/components/TextPromptDialog";
+import { AddTodoDialog } from "@/components/AddTodoDialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { TodoList } from "@/components/TodoList";
 import { SettingsProvider } from "@/lib/settings";
 import { usePersistentState } from "@/lib/storage";
-import { api, type TodoItem } from "@/lib/tauri";
+import { api, type Category, type TodoItem } from "@/lib/tauri";
 
 const NOW_REFRESH_MS = 60_000;
 const STATUS_MS = 5000;
@@ -39,6 +41,8 @@ function clamp(v: number, min: number, max: number) {
 // The main view of an open data directory.
 function TodoApp({ dataDir }: { dataDir: string }) {
   const [items, setItems] = useState<TodoItem[]>([]);
+  const [categoryList, setCategoryList] = useState<Category[]>([]);
+  const [managing, setManaging] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hideCompleted, setHideCompleted] = usePersistentState("hideCompleted", true);
   const [subHideCompleted, setSubHideCompleted] = usePersistentState("subHideCompleted", true);
@@ -59,10 +63,8 @@ function TodoApp({ dataDir }: { dataDir: string }) {
   const selected = visible.find((i) => i.id === selectedId) ?? null;
   const selectedRef = useRef<string | null>(null);
   selectedRef.current = selected?.id ?? null;
-  const categories = useMemo(
-    () => [...new Set(items.map((i) => i.category).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
-    [items],
-  );
+  // The categories that the dropdowns offer: all but the archived ones.
+  const activeCategories = useMemo(() => categoryList.filter((c) => !c.archived), [categoryList]);
   const openCount = items.filter((i) => !i.done).length;
 
   const notify = useCallback((text: string, error = false) => {
@@ -73,7 +75,9 @@ function TodoApp({ dataDir }: { dataDir: string }) {
 
   const refresh = useCallback(async () => {
     try {
-      setItems(await api.loadItems());
+      const [list, cats] = await Promise.all([api.loadItems(), api.listCategories()]);
+      setItems(list);
+      setCategoryList(cats);
     } catch (e) {
       notify(String(e), true);
     }
@@ -109,9 +113,9 @@ function TodoApp({ dataDir }: { dataDir: string }) {
     [run],
   );
 
-  const addItem = async (text: string) => {
+  const addItem = async (text: string, category: string) => {
     setAdding(false);
-    const created = await run(() => api.addItem(text));
+    const created = await run(() => api.addItem(text, category || null));
     if (!created) return;
     setSelectedId(created.id);
     window.setTimeout(() => notesRef.current?.focus(), 50);
@@ -191,6 +195,10 @@ function TodoApp({ dataDir }: { dataDir: string }) {
           <Trash2 />
           Delete
         </Button>
+        <Button variant="outline" size="xs" onClick={() => setManaging(true)} title="Add, rename, color and delete categories">
+          <Tags />
+          Categories
+        </Button>
         <div className="ml-auto flex items-center gap-3">
           <Check label="Hide completed" checked={hideCompleted} onChange={setHideCompleted} />
           <SettingsMenu />
@@ -210,10 +218,11 @@ function TodoApp({ dataDir }: { dataDir: string }) {
           />
           <Details
             item={selected}
-            categories={categories}
+            categories={categoryList}
             onCategory={(id, c) => run(() => api.setCategory(id, c))}
             onCreated={(id, c) => run(() => api.setCreated(id, c))}
             onDue={(id, d) => run(() => api.setDue(id, d))}
+            onManage={() => setManaging(true)}
           />
         </section>
         <ResizeHandle side="left" className="border-l" onResize={(w) => setLeftWidth(clamp(w, 360, 1400))} onReset={() => setLeftWidth(LEFT_DEFAULT)} />
@@ -266,14 +275,7 @@ function TodoApp({ dataDir }: { dataDir: string }) {
         )}
       </footer>
 
-      <TextPromptDialog
-        open={adding}
-        title="Add todo"
-        label="Title"
-        confirm="Add"
-        onCancel={() => setAdding(false)}
-        onSubmit={addItem}
-      />
+      <AddTodoDialog open={adding} categories={activeCategories} onCancel={() => setAdding(false)} onSubmit={addItem} />
       <ConfirmDialog
         open={deleting !== null}
         title="Delete todo"
@@ -281,6 +283,23 @@ function TodoApp({ dataDir }: { dataDir: string }) {
         confirm="Delete"
         onCancel={() => setDeleting(null)}
         onConfirm={() => deleting && deleteItem(deleting)}
+      />
+      <CategoryManager
+        open={managing}
+        onClose={() => setManaging(false)}
+        categories={categoryList}
+        onAdd={(name) => run(() => api.addCategory(name))}
+        onRename={async (old, name) => {
+          const merge = categoryList.some((c) => c.name === name.trim());
+          const n = await run(() => api.renameCategory(old, name));
+          if (n !== undefined) notify(`${merge ? "Merged" : "Renamed"} "${old}" into "${name.trim()}" (${n} todos).`);
+        }}
+        onDelete={async (name) => {
+          const n = await run(() => api.deleteCategory(name));
+          if (n !== undefined) notify(`Deleted "${name}" (removed from ${n} todos).`);
+        }}
+        onColor={(name, color) => run(() => api.setCategoryColor(name, color))}
+        onArchive={(name, archived) => run(() => api.setCategoryArchived(name, archived))}
       />
       <Confetti ref={confetti} />
     </div>

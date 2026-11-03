@@ -78,7 +78,7 @@ export function TodoList({ items, selectedId, now, onSelect, onToggle, onRename,
           <p className="px-3 py-6 text-center text-sm text-muted-foreground">No todos. Press Ctrl N to add one.</p>
         )}
         {items.map((item) => {
-          const colors = item.done ? null : categoryColors(item.category_hue);
+          const colors = item.done ? null : categoryColors(item.category_hue, item.category_color);
           const due = dueIn(item.due_at, now);
           const selected = item.id === selectedId;
           return (
@@ -110,8 +110,8 @@ export function TodoList({ items, selectedId, now, onSelect, onToggle, onRename,
               <span className="min-w-0">
                 {item.category && (
                   <span
-                    className={cn("block truncate px-1.5 py-px text-xs", colors ? "text-white" : "border text-muted-foreground")}
-                    style={colors ? { backgroundColor: colors.chip } : undefined}
+                    className={cn("block truncate px-1.5 py-px text-xs", !colors && "border text-muted-foreground")}
+                    style={colors ? { backgroundColor: colors.chip, color: colors.text } : undefined}
                     title={item.category}
                   >
                     {item.category}

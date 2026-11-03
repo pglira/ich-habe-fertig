@@ -1,3 +1,4 @@
+mod categories;
 mod cli;
 mod commands;
 mod error;
@@ -44,6 +45,12 @@ pub fn run() {
             commands::paste_image,
             commands::import_images,
             commands::open_image,
+            commands::list_categories,
+            commands::add_category,
+            commands::rename_category,
+            commands::delete_category,
+            commands::set_category_color,
+            commands::set_category_archived,
             commands::load_settings,
             commands::save_settings,
         ])

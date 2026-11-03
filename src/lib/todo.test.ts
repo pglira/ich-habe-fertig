@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryColors, daysBetween, dueIn, fromLocalInput, subtaskCount, utcDate } from "./todo";
+import { autoColor, categoryColors, daysBetween, hslToHex, isLight, dueIn, fromLocalInput, subtaskCount, utcDate } from "./todo";
 import type { TodoItem } from "./tauri";
 
 const now = new Date("2026-03-20T12:00:00Z");
@@ -33,7 +33,7 @@ describe("dates", () => {
 describe("subtaskCount", () => {
   const item = (done: boolean[]): TodoItem => ({
     id: "a", text: "t", notes: "", done: false, category: "", category_hue: null,
-    created_at: null, completed_at: null, due_at: null, images: [],
+    category_color: null, created_at: null, completed_at: null, due_at: null, images: [],
     subtasks: done.map((d, i) => ({ id: String(i), text: "s", done: d })),
   });
   it("shows open of total", () => {
@@ -46,5 +46,18 @@ describe("categoryColors", () => {
   it("has no colors without a category", () => {
     expect(categoryColors(null)).toBeNull();
     expect(categoryColors(120)?.chip).toContain("hsl(120");
+  });
+  it("prefers the color that the user set", () => {
+    expect(categoryColors(120, "#ffee00")).toMatchObject({ chip: "#ffee00", bar: "#ffee00", text: "#111111" });
+    expect(categoryColors(120, "#102030")?.text).toBe("#ffffff");
+    expect(categoryColors(null, "#102030")?.chip).toBe("#102030");
+    expect(categoryColors(120, "bad")?.chip).toContain("hsl(120");
+  });
+  it("converts HSL to hex", () => {
+    expect(hslToHex(0, 1, 0.5)).toBe("#ff0000");
+    expect(hslToHex(120, 1, 0.25)).toBe("#008000");
+    expect(autoColor(0)).toMatch(/^#[0-9a-f]{6}$/);
+    expect(isLight("#ffffff")).toBe(true);
+    expect(isLight("#000000")).toBe(false);
   });
 });

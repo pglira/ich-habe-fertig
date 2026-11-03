@@ -1,5 +1,6 @@
 //! Tauri commands. The open store lives in the managed `AppState`.
 
+use crate::categories::Category;
 use crate::error::{AppError, Result};
 use crate::images::{self, ClipboardImage};
 use crate::settings::{self, Settings};
@@ -60,9 +61,19 @@ pub fn load_items(state: State<AppState>) -> Result<Vec<TodoItem>> {
     state.with(|s| s.load())
 }
 
+/// Adds a todo, optionally with a category.
 #[tauri::command]
-pub fn add_item(state: State<AppState>, text: String) -> Result<TodoItem> {
-    state.with(|s| s.add(&text, ""))
+pub fn add_item(state: State<AppState>, text: String, category: Option<String>) -> Result<TodoItem> {
+    state.with(|s| {
+        if let Some(c) = category.as_deref() {
+            s.require_category(c)?;
+        }
+        let item = s.add(&text, "")?;
+        if let Some(c) = category.as_deref().filter(|c| !c.trim().is_empty()) {
+            s.set_category(&item.id, c)?;
+        }
+        Ok(s.get(&item.id)?.unwrap_or(item))
+    })
 }
 
 #[tauri::command]
@@ -87,7 +98,10 @@ pub fn update_notes(state: State<AppState>, id: String, notes: String) -> Result
 
 #[tauri::command]
 pub fn set_category(state: State<AppState>, id: String, category: String) -> Result<bool> {
-    state.with(|s| s.set_category(&id, &category))
+    state.with(|s| {
+        s.require_category(&category)?;
+        s.set_category(&id, &category)
+    })
 }
 
 /// `due` is a date `YYYY-MM-DD`, or null to clear the due date.
@@ -189,4 +203,35 @@ pub fn load_settings() -> Settings {
 #[tauri::command]
 pub fn save_settings(settings: Settings) -> Result<()> {
     settings.save(&settings::config_dir())
+}
+
+#[tauri::command]
+pub fn list_categories(state: State<AppState>) -> Result<Vec<Category>> {
+    state.with(|s| s.categories())
+}
+
+#[tauri::command]
+pub fn add_category(state: State<AppState>, name: String) -> Result<bool> {
+    state.with(|s| s.add_category(&name))
+}
+
+#[tauri::command]
+pub fn rename_category(state: State<AppState>, old: String, new: String) -> Result<usize> {
+    state.with(|s| s.rename_category(&old, &new))
+}
+
+#[tauri::command]
+pub fn delete_category(state: State<AppState>, name: String) -> Result<usize> {
+    state.with(|s| s.delete_category(&name))
+}
+
+#[tauri::command]
+pub fn set_category_archived(state: State<AppState>, name: String, archived: bool) -> Result<()> {
+    state.with(|s| s.set_category_archived(&name, archived))
+}
+
+/// `color` is `#rrggbb`, or null for the automatic color.
+#[tauri::command]
+pub fn set_category_color(state: State<AppState>, name: String, color: Option<String>) -> Result<()> {
+    state.with(|s| s.set_category_color(&name, color.as_deref()))
 }

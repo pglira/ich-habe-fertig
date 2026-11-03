@@ -5,7 +5,8 @@ A simple desktop todo app, built with Tauri (Rust) and React. 📝
 ## Features
 
 - ➕ Add / delete / inline-edit / complete todos
-- 🏷️ Free-text category with a hash color, 📅 due date, editable creation date; the list is sorted by creation date
+- 🏷️ Categories: chosen from a dropdown; managed in a dialog (add, rename/merge, color, archive, delete); automatic hash color unless a color is set
+- 📅 Due date, editable creation date; the list is sorted by creation date
 - 📝 Notes editor with line numbers (debounced auto-save)
 - ☑️ Sub-tasks (add / inline-edit / check / delete, hide-completed filter); the list shows open/total
 - 🖼️ Image attachments (paste from the clipboard or drag from the file manager); thumbnails;
@@ -57,6 +58,7 @@ All data is stored under the chosen directory: `todos.db` (SQLite) for the todo 
 ## Layout
 
 - `src-tauri/src/store.rs` — `TodoStore`: the SQLite schema and all changes to the data, with unit tests.
+- `src-tauri/src/categories.rs` — categories: list, add, rename, color, archive, delete.
 - `src-tauri/src/images.rs` — image files below `images/<id>/`, the clipboard.
 - `src-tauri/src/commands.rs` — Tauri commands.
 - `src-tauri/src/settings.rs` — the settings file in the configuration directory of the user.

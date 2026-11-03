@@ -58,12 +58,56 @@ export function subtaskCount(item: TodoItem): string {
   return `${open}/${total}`;
 }
 
-// The colors of a category with the given hue.
-export function categoryColors(hue: number | null): { chip: string; row: string; bar: string } | null {
+export interface CategoryColors {
+  chip: string;
+  row: string;
+  bar: string;
+  // The color of text on the chip.
+  text: string;
+}
+
+// The hex color `#rrggbb` of an HSL color (hue in degrees, s and l in 0..1).
+export function hslToHex(h: number, s: number, l: number): string {
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const c = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(c * 255).toString(16).padStart(2, "0");
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+// The automatic chip color of a category with the given hue.
+export function autoColor(hue: number): string {
+  return hslToHex(hue, 0.45, 0.32);
+}
+
+// True if a hex color `#rrggbb` is light (relative luminance above 0.4).
+export function isLight(hex: string): boolean {
+  const n = parseInt(hex.slice(1), 16);
+  const lin = (c: number) => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255) > 0.4;
+}
+
+// The colors of a category: the color that the user set, else the automatic
+// color from the hue. Null for no category.
+export function categoryColors(hue: number | null, color?: string | null): CategoryColors | null {
+  if (color && /^#[0-9a-f]{6}$/i.test(color)) {
+    return {
+      chip: color,
+      row: `color-mix(in srgb, ${color} 22%, transparent)`,
+      bar: color,
+      text: isLight(color) ? "#111111" : "#ffffff",
+    };
+  }
   if (hue === null) return null;
   return {
     chip: `hsl(${hue} 45% 32%)`,
     row: `hsl(${hue} 40% 30% / 0.22)`,
     bar: `hsl(${hue} 60% 55%)`,
+    text: "#ffffff",
   };
 }
