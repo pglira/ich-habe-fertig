@@ -2,6 +2,7 @@
 
 use crate::error::{AppError, Result};
 use crate::images::{self, ClipboardImage};
+use crate::settings::{self, Settings};
 use crate::store::{SubTask, TodoItem, TodoStore};
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
@@ -178,4 +179,14 @@ pub fn open_image(state: State<AppState>, rel: String) -> Result<()> {
         let _ = child.wait();
     });
     Ok(())
+}
+
+#[tauri::command]
+pub fn load_settings() -> Settings {
+    Settings::load(&settings::config_dir())
+}
+
+#[tauri::command]
+pub fn save_settings(settings: Settings) -> Result<()> {
+    settings.save(&settings::config_dir())
 }

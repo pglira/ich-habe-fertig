@@ -29,6 +29,13 @@ export interface Startup {
   error: string | null;
 }
 
+// The settings of the app. Unknown keys from newer versions pass through.
+export interface Settings {
+  // The id of the notes font (`src/lib/fonts.ts`); null for the default.
+  notes_font: string | null;
+  [key: string]: unknown;
+}
+
 export const api = {
   startup: () => invoke<Startup>("startup"),
   openDataDir: (path: string) => invoke<string>("open_data_dir", { path }),
@@ -51,6 +58,8 @@ export const api = {
   pasteImage: (id: string) => invoke<number>("paste_image", { id }),
   importImages: (id: string, paths: string[]) => invoke<number>("import_images", { id, paths }),
   openImage: (rel: string) => invoke<void>("open_image", { rel }),
+  loadSettings: () => invoke<Settings>("load_settings"),
+  saveSettings: (settings: Settings) => invoke<void>("save_settings", { settings }),
 };
 
 // The URL of an image file of the data directory, served by the `ihf` URI scheme.

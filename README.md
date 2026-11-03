@@ -11,6 +11,7 @@ A simple desktop todo app, built with Tauri (Rust) and React. 📝
 - 🖼️ Image attachments (paste from the clipboard or drag from the file manager); thumbnails;
   Ctrl+wheel zoom; double-click opens the image in the external viewer `cheder`
 - 🎉 Confetti when an item is completed
+- ⚙️ Settings (gear button): the font of the notes editor. Stored in `~/.config/ich-habe-fertig/settings.json`
 
 ## Keyboard
 
@@ -58,6 +59,7 @@ All data is stored under the chosen directory: `todos.db` (SQLite) for the todo 
 - `src-tauri/src/store.rs` — `TodoStore`: the SQLite schema and all changes to the data, with unit tests.
 - `src-tauri/src/images.rs` — image files below `images/<id>/`, the clipboard.
 - `src-tauri/src/commands.rs` — Tauri commands.
+- `src-tauri/src/settings.rs` — the settings file in the configuration directory of the user.
 - `src-tauri/src/protocol.rs` — the `ihf` URI scheme that serves the image files to the webview.
 - `src/App.tsx` — the main view; `src/components/` — list, details, notes, sub-tasks, images, confetti.
 - `src/styles/index.css` — the design tokens, shared with Galley: always dark, square corners, IBM Plex Sans and Mono.

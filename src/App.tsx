@@ -12,10 +12,12 @@ import { Images } from "@/components/Images";
 import { NotesEditor, type NotesEditorHandle } from "@/components/NotesEditor";
 import { ResizeHandle } from "@/components/ResizeHandle";
 import { Check, SectionHeader } from "@/components/Section";
+import { SettingsMenu } from "@/components/SettingsMenu";
 import { StartScreen } from "@/components/StartScreen";
 import { Subtasks } from "@/components/Subtasks";
 import { ConfirmDialog, TextPromptDialog } from "@/components/TextPromptDialog";
 import { TodoList } from "@/components/TodoList";
+import { SettingsProvider } from "@/lib/settings";
 import { usePersistentState } from "@/lib/storage";
 import { api, type TodoItem } from "@/lib/tauri";
 
@@ -189,12 +191,13 @@ function TodoApp({ dataDir }: { dataDir: string }) {
           <Trash2 />
           Delete
         </Button>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
           <Check label="Hide completed" checked={hideCompleted} onChange={setHideCompleted} />
+          <SettingsMenu />
         </div>
       </header>
 
-      <main className="flex min-h-0 flex-1">
+      <main className="flex min-h-0 flex-1 overflow-hidden">
         <section className="flex min-w-[360px] shrink-0 flex-col" style={{ width: leftWidth, maxWidth: "70%" }}>
           <TodoList
             items={visible}
@@ -217,9 +220,11 @@ function TodoApp({ dataDir }: { dataDir: string }) {
 
         <section className="flex min-w-0 flex-1 flex-col">
           <SectionHeader title="Notes" subtitle={selected?.text} />
-          <NotesEditor ref={notesRef} itemId={sid} notes={selected?.notes ?? ""} onSave={saveNotes} />
+          <div className="flex min-h-[120px] flex-1 flex-col">
+            <NotesEditor ref={notesRef} itemId={sid} notes={selected?.notes ?? ""} onSave={saveNotes} />
+          </div>
           <ResizeHandle side="top" onResize={(h) => setSubtasksHeight(clamp(h, 90, 900))} onReset={() => setSubtasksHeight(SUBTASKS_DEFAULT)} />
-          <div className="shrink-0 border-t" style={{ height: subtasksHeight }}>
+          <div className="min-h-[90px] border-t" style={{ flex: `0 1 ${subtasksHeight}px` }}>
             <Subtasks
               item={selected}
               hideCompleted={subHideCompleted}
@@ -235,7 +240,7 @@ function TodoApp({ dataDir }: { dataDir: string }) {
             />
           </div>
           <ResizeHandle side="top" onResize={(h) => setImagesHeight(clamp(h, 90, 900))} onReset={() => setImagesHeight(IMAGES_DEFAULT)} />
-          <div className="shrink-0 border-t" style={{ height: imagesHeight }}>
+          <div className="min-h-[90px] border-t" style={{ flex: `0 1 ${imagesHeight}px` }}>
             <Images
               item={selected}
               dragging={dragging}
@@ -314,8 +319,10 @@ export default function App() {
 
   if (!ready) return null;
   return (
-    <TooltipProvider>
-      {dataDir ? <TodoApp dataDir={dataDir} /> : <StartScreen error={error} onChoose={choose} />}
-    </TooltipProvider>
+    <SettingsProvider>
+      <TooltipProvider>
+        {dataDir ? <TodoApp dataDir={dataDir} /> : <StartScreen error={error} onChoose={choose} />}
+      </TooltipProvider>
+    </SettingsProvider>
   );
 }

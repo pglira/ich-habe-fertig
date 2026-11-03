@@ -18,7 +18,7 @@ const theme = EditorView.theme(
   {
     "&": { height: "100%", fontSize: "13px", backgroundColor: "var(--background)" },
     "&.cm-focused": { outline: "none" },
-    ".cm-scroller": { fontFamily: "var(--font-mono)", lineHeight: "1.55" },
+    ".cm-scroller": { fontFamily: "var(--font-notes, var(--font-mono))", lineHeight: "1.55" },
     ".cm-content": { caretColor: "var(--foreground)", padding: "6px 0" },
     ".cm-gutters": {
       backgroundColor: "var(--card)",

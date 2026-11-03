@@ -3,6 +3,7 @@ mod commands;
 mod error;
 mod images;
 mod protocol;
+mod settings;
 mod store;
 
 use commands::AppState;
@@ -43,6 +44,8 @@ pub fn run() {
             commands::paste_image,
             commands::import_images,
             commands::open_image,
+            commands::load_settings,
+            commands::save_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
