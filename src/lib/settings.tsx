@@ -5,7 +5,13 @@ import { notesFont } from "@/lib/fonts";
 interface Ctx {
   settings: Settings;
   setNotesFont: (id: string) => void;
+  hideCompleted: boolean;
+  setHideCompleted: (hide: boolean) => void;
 }
+
+// The key under which the browser storage kept "Hide completed" before it
+// became a setting.
+const LEGACY_HIDE_KEY = "ihf:hideCompleted";
 
 const SettingsContext = React.createContext<Ctx | null>(null);
 
@@ -15,7 +21,24 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = React.useState<Settings>({ notes_font: null });
 
   React.useEffect(() => {
-    api.loadSettings().then(setSettings).catch(() => {});
+    api
+      .loadSettings()
+      .then((s) => {
+        // Take over the value from the browser storage once.
+        if (s.hide_completed == null) {
+          try {
+            const legacy = localStorage.getItem(LEGACY_HIDE_KEY);
+            if (legacy !== null) {
+              s = { ...s, hide_completed: JSON.parse(legacy) === true };
+              api.saveSettings(s).catch(() => {});
+            }
+          } catch {
+            // storage is not available or the value is invalid
+          }
+        }
+        setSettings(s);
+      })
+      .catch(() => {});
   }, []);
 
   React.useEffect(() => {
@@ -31,7 +54,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = React.useMemo(
-    () => ({ settings, setNotesFont: (id: string) => update({ notes_font: id }) }),
+    () => ({
+      settings,
+      setNotesFont: (id: string) => update({ notes_font: id }),
+      hideCompleted: settings.hide_completed ?? true,
+      setHideCompleted: (hide: boolean) => update({ hide_completed: hide }),
+    }),
     [settings, update],
   );
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

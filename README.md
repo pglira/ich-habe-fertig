@@ -19,6 +19,7 @@ A simple desktop todo app, built with Tauri (Rust) and React. 📝
 | Key | Action |
 | --- | --- |
 | `Ctrl N` | Add a todo |
+| `Ctrl H` | Hide or show the completed todos (also in the settings menu) |
 | `Ctrl V` | Paste an image to the selected todo (outside of text fields) |
 | `↑` / `↓` | Select the previous / next todo |
 | `Space` | Complete the selected todo |

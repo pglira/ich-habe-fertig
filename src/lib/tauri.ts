@@ -47,6 +47,8 @@ export interface Startup {
 export interface Settings {
   // The id of the notes font (`src/lib/fonts.ts`); null for the default.
   notes_font: string | null;
+  // True to hide completed todos in the list; null or missing for the default (true).
+  hide_completed?: boolean | null;
   [key: string]: unknown;
 }
 

@@ -12,14 +12,14 @@ import { Images } from "@/components/Images";
 import { NotesEditor, type NotesEditorHandle } from "@/components/NotesEditor";
 import { ResizeHandle } from "@/components/ResizeHandle";
 import { CategoryManager } from "@/components/CategoryManager";
-import { Check, SectionHeader } from "@/components/Section";
+import { SectionHeader } from "@/components/Section";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { StartScreen } from "@/components/StartScreen";
 import { Subtasks } from "@/components/Subtasks";
 import { AddTodoDialog } from "@/components/AddTodoDialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { TodoList } from "@/components/TodoList";
-import { SettingsProvider } from "@/lib/settings";
+import { SettingsProvider, useSettings } from "@/lib/settings";
 import { usePersistentState } from "@/lib/storage";
 import { api, type Category, type TodoItem } from "@/lib/tauri";
 
@@ -44,7 +44,7 @@ function TodoApp({ dataDir }: { dataDir: string }) {
   const [categoryList, setCategoryList] = useState<Category[]>([]);
   const [managing, setManaging] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [hideCompleted, setHideCompleted] = usePersistentState("hideCompleted", true);
+  const { hideCompleted, setHideCompleted } = useSettings();
   const [subHideCompleted, setSubHideCompleted] = usePersistentState("subHideCompleted", true);
   const [thumbSize, setThumbSize] = usePersistentState("thumbSize", 96);
   const [leftWidth, setLeftWidth] = usePersistentState("leftWidth", LEFT_DEFAULT);
@@ -59,6 +59,8 @@ function TodoApp({ dataDir }: { dataDir: string }) {
   const notesRef = useRef<NotesEditorHandle>(null);
   const statusTimer = useRef<number | null>(null);
 
+  const hideCompletedRef = useRef(hideCompleted);
+  hideCompletedRef.current = hideCompleted;
   const visible = useMemo(() => (hideCompleted ? items.filter((i) => !i.done) : items), [items, hideCompleted]);
   const selected = visible.find((i) => i.id === selectedId) ?? null;
   const selectedRef = useRef<string | null>(null);
@@ -164,7 +166,8 @@ function TodoApp({ dataDir }: { dataDir: string }) {
     };
   }, [run, notify]);
 
-  // Ctrl N adds a todo. Ctrl V outside of text fields pastes an image.
+  // Ctrl N adds a todo. Ctrl H hides or shows the completed todos. Ctrl V
+  // outside of text fields pastes an image.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!e.ctrlKey || e.altKey || e.shiftKey) return;
@@ -172,6 +175,9 @@ function TodoApp({ dataDir }: { dataDir: string }) {
       if (key === "n") {
         e.preventDefault();
         setAdding(true);
+      } else if (key === "h") {
+        e.preventDefault();
+        setHideCompleted(!hideCompletedRef.current);
       } else if (key === "v" && !isEditable(e.target) && !document.querySelector(".cm-focused")) {
         e.preventDefault();
         pasteImage();
@@ -179,7 +185,7 @@ function TodoApp({ dataDir }: { dataDir: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [pasteImage]);
+  }, [pasteImage, setHideCompleted]);
 
   const sid = selected?.id ?? null;
 
@@ -200,7 +206,6 @@ function TodoApp({ dataDir }: { dataDir: string }) {
           Categories
         </Button>
         <div className="ml-auto flex items-center gap-3">
-          <Check label="Hide completed" checked={hideCompleted} onChange={setHideCompleted} />
           <SettingsMenu />
         </div>
       </header>
@@ -268,7 +273,7 @@ function TodoApp({ dataDir }: { dataDir: string }) {
           {dataDir}
         </span>
         <span className="shrink-0">
-          {openCount} open · {items.length} total
+          {openCount} open · {items.length} total{hideCompleted && items.length > openCount ? " · completed hidden" : ""}
         </span>
         {status && (
           <span className={status.error ? "ml-auto truncate text-destructive" : "ml-auto truncate text-foreground"}>{status.text}</span>

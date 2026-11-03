@@ -10,6 +10,9 @@ pub struct Settings {
     /// The id of the font of the notes editor; `None` for the default font.
     #[serde(default)]
     pub notes_font: Option<String>,
+    /// True to hide completed todos in the list; `None` for the default (true).
+    #[serde(default)]
+    pub hide_completed: Option<bool>,
     /// Keys that this version does not know. They stay in the file.
     #[serde(flatten)]
     pub other: serde_json::Map<String, serde_json::Value>,
@@ -72,5 +75,6 @@ mod tests {
         let back = Settings::load(&d.path().join("sub"));
         assert_eq!(back.notes_font.as_deref(), Some("fira-code"));
         assert_eq!(back.other.get("future"), Some(&serde_json::json!(42)));
+        assert_eq!(back.hide_completed, None);
     }
 }

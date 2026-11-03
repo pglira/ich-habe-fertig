@@ -2,6 +2,7 @@ import { Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
@@ -17,7 +18,7 @@ const GROUP_TITLE = "border-b border-border bg-muted px-3 py-1.5 text-[11px] fon
 
 // The settings of the app, as a menu below a gear button.
 export function SettingsMenu() {
-  const { settings, setNotesFont } = useSettings();
+  const { settings, setNotesFont, hideCompleted, setHideCompleted } = useSettings();
   const current = notesFont(settings.notes_font).id;
   const groups = [
     { label: "Monospace", fonts: NOTES_FONTS.filter((f) => f.monospace) },
@@ -32,6 +33,17 @@ export function SettingsMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <div className="m-1 border border-border">
+          <div className={GROUP_TITLE}>List</div>
+          <DropdownMenuCheckboxItem
+            checked={hideCompleted}
+            onCheckedChange={setHideCompleted}
+            onSelect={(e) => e.preventDefault()}
+          >
+            Hide completed todos
+            <span className="ml-auto pl-3 text-xs text-muted-foreground">Ctrl H</span>
+          </DropdownMenuCheckboxItem>
+        </div>
+        <div className="m-1 mt-2 border border-border">
           <div className={GROUP_TITLE}>Notes</div>
           <DropdownMenuRadioGroup value={current} onValueChange={setNotesFont}>
             {groups.map((g, i) => (
