@@ -1,0 +1,38 @@
+[package]
+name = "ich-habe-fertig"
+version = "0.2.0"
+description = "A simple desktop todo app"
+authors = ["Philipp Glira"]
+license = "MIT"
+edition = "2021"
+
+[lib]
+name = "ich_habe_fertig_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+rusqlite = { version = "0.37", features = ["bundled"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }
+md-5 = "0.10"
+percent-encoding = "2"
+arboard = "3"
+png = "0.17"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

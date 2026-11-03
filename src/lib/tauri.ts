@@ -1,0 +1,59 @@
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+
+export interface SubTask {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+export interface TodoItem {
+  id: string;
+  text: string;
+  notes: string;
+  done: boolean;
+  category: string;
+  // The hue (0..360) of the color of the category; null for no category.
+  category_hue: number | null;
+  // RFC 3339 time stamps in UTC.
+  created_at: string | null;
+  completed_at: string | null;
+  // A date `YYYY-MM-DD`.
+  due_at: string | null;
+  // Paths relative to the data directory.
+  images: string[];
+  subtasks: SubTask[];
+}
+
+export interface Startup {
+  data_dir: string | null;
+  error: string | null;
+}
+
+export const api = {
+  startup: () => invoke<Startup>("startup"),
+  openDataDir: (path: string) => invoke<string>("open_data_dir", { path }),
+  loadItems: () => invoke<TodoItem[]>("load_items"),
+  addItem: (text: string) => invoke<TodoItem>("add_item", { text }),
+  deleteItem: (id: string) => invoke<boolean>("delete_item", { id }),
+  setDone: (id: string, done: boolean) => invoke<boolean>("set_done", { id, done }),
+  updateText: (id: string, text: string) => invoke<boolean>("update_text", { id, text }),
+  updateNotes: (id: string, notes: string) => invoke<boolean>("update_notes", { id, notes }),
+  setCategory: (id: string, category: string) => invoke<boolean>("set_category", { id, category }),
+  setDue: (id: string, due: string | null) => invoke<boolean>("set_due", { id, due }),
+  setCreated: (id: string, created: string) => invoke<boolean>("set_created", { id, created }),
+  addSubtask: (id: string, text: string) => invoke<SubTask | null>("add_subtask", { id, text }),
+  setSubtaskDone: (id: string, subId: string, done: boolean) =>
+    invoke<boolean>("set_subtask_done", { id, subId, done }),
+  updateSubtaskText: (id: string, subId: string, text: string) =>
+    invoke<boolean>("update_subtask_text", { id, subId, text }),
+  deleteSubtask: (id: string, subId: string) => invoke<boolean>("delete_subtask", { id, subId }),
+  removeImage: (id: string, rel: string) => invoke<boolean>("remove_image", { id, rel }),
+  pasteImage: (id: string) => invoke<number>("paste_image", { id }),
+  importImages: (id: string, paths: string[]) => invoke<number>("import_images", { id, paths }),
+  openImage: (rel: string) => invoke<void>("open_image", { rel }),
+};
+
+// The URL of an image file of the data directory, served by the `ihf` URI scheme.
+export function imageUrl(rel: string): string {
+  return convertFileSrc(rel, "ihf");
+}

@@ -1,5 +1,8 @@
-build/
-*.o
-*.obj
-.cache/
-compile_commands.json
+node_modules
+dist
+*.local
+*.log
+*.tsbuildinfo
+src-tauri/target
+src-tauri/gen
+.backlog.md

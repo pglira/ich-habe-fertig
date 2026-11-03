@@ -1,41 +1,66 @@
 # ich-habe-fertig
 
-A simple desktop todo app written in C++17 with Qt6 Widgets and SQLite. 📝
+A simple desktop todo app, built with Tauri (Rust) and React. 📝
 
 ## Features
 
 - ➕ Add / delete / inline-edit / complete todos
-- 🏷️ Free-text category (hash-coloured row), 📅 due date
-- 📝 Notes editor with line-number gutter (debounced auto-save)
-- ☑️ Sub-tasks (add / inline-edit / check / delete, hide-completed filter)
-- 🖼️ Image attachments (paste from clipboard or drag-from-file URLs); thumbnails;
-  Ctrl+wheel zoom; double-click opens via external `cheder`
-- 🎉 Confetti celebration when an item is completed
+- 🏷️ Free-text category with a hash color, 📅 due date, editable creation date; the list is sorted by creation date
+- 📝 Notes editor with line numbers (debounced auto-save)
+- ☑️ Sub-tasks (add / inline-edit / check / delete, hide-completed filter); the list shows open/total
+- 🖼️ Image attachments (paste from the clipboard or drag from the file manager); thumbnails;
+  Ctrl+wheel zoom; double-click opens the image in the external viewer `cheder`
+- 🎉 Confetti when an item is completed
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| `Ctrl N` | Add a todo |
+| `Ctrl V` | Paste an image to the selected todo (outside of text fields) |
+| `↑` / `↓` | Select the previous / next todo |
+| `Space` | Complete the selected todo |
+| `F2`, `Enter` | Rename the selected todo |
+| `Delete` | Delete the selected todo, sub-task or image |
 
 ## Build
 
-Requires Qt6 (Widgets + Sql + Test) and CMake ≥ 3.21.
+Requires Rust, Node.js, pnpm and the [Tauri prerequisites](https://tauri.app/start/prerequisites/).
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j
+pnpm install
+pnpm tauri build --no-bundle    # src-tauri/target/release/ich-habe-fertig
+pnpm tauri build                # also an AppImage in src-tauri/target/release/bundle/appimage/
+scripts/install.sh              # builds and installs below ~/.local (launcher, desktop entry, icons)
 ```
 
-Outputs:
+Development: `pnpm tauri dev`.
 
-- `build/ich-habe-fertig` — the GUI app
-- `build/tests/test_todo_store` — unit tests (`ctest --test-dir build`)
+## Tests
 
-For a fully static binary, point `CMAKE_PREFIX_PATH` at a static-built Qt6 and pass `-DBUILD_STATIC=ON`.
+```sh
+cd src-tauri && cargo test      # store, image and CLI tests
+pnpm test                       # frontend helpers
+pnpm typecheck
+```
 
 ## Run
 
 ```sh
-./build/ich-habe-fertig /path/to/data-dir   # explicit dir
-./build/ich-habe-fertig                      # opens directory chooser
+ich-habe-fertig /path/to/data-dir   # explicit directory, created if necessary
+ich-habe-fertig                     # opens a directory chooser
 ```
 
-All data is stored under the chosen directory: `todos.db` for the todo state and `images/<id>/` for attached images.
+All data is stored under the chosen directory: `todos.db` (SQLite) for the todo state and `images/<id>/` for attached images.
+
+## Layout
+
+- `src-tauri/src/store.rs` — `TodoStore`: the SQLite schema and all changes to the data, with unit tests.
+- `src-tauri/src/images.rs` — image files below `images/<id>/`, the clipboard.
+- `src-tauri/src/commands.rs` — Tauri commands.
+- `src-tauri/src/protocol.rs` — the `ihf` URI scheme that serves the image files to the webview.
+- `src/App.tsx` — the main view; `src/components/` — list, details, notes, sub-tasks, images, confetti.
+- `src/styles/index.css` — the design tokens, shared with Galley: always dark, square corners, IBM Plex Sans and Mono.
 
 ## License
 
