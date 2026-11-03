@@ -49,6 +49,10 @@ export interface Settings {
   notes_font: string | null;
   // True to hide completed todos in the list; null or missing for the default (true).
   hide_completed?: boolean | null;
+  // The celebration of completed items (`src/lib/celebration.ts`); null or missing for the defaults.
+  celebration?: boolean | null;
+  celebration_style?: string | null;
+  celebration_intensity?: string | null;
   [key: string]: unknown;
 }
 

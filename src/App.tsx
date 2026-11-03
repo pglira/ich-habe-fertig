@@ -206,7 +206,7 @@ function TodoApp({ dataDir }: { dataDir: string }) {
           Categories
         </Button>
         <div className="ml-auto flex items-center gap-3">
-          <SettingsMenu />
+          <SettingsMenu onPreview={() => confetti.current?.preview()} />
         </div>
       </header>
 

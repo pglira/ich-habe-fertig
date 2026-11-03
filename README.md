@@ -11,7 +11,7 @@ A simple desktop todo app, built with Tauri (Rust) and React. 📝
 - ☑️ Sub-tasks (add / inline-edit / check / delete, hide-completed filter); the list shows open/total
 - 🖼️ Image attachments (paste from the clipboard or drag from the file manager); thumbnails;
   Ctrl+wheel zoom; double-click opens the image in the external viewer `cheder`
-- 🎉 Confetti when an item is completed
+- 🎉 Confetti (`canvas-confetti`) when a todo or a sub-task is completed; style, intensity and on/off in the settings
 - ⚙️ Settings (gear button): the font of the notes editor. Stored in `~/.config/ich-habe-fertig/settings.json`
 
 ## Keyboard

@@ -1,12 +1,15 @@
 import * as React from "react";
 import { api, type Settings } from "@/lib/tauri";
 import { notesFont } from "@/lib/fonts";
+import { celebrationStyle, intensity } from "@/lib/celebration";
 
 interface Ctx {
   settings: Settings;
   setNotesFont: (id: string) => void;
   hideCompleted: boolean;
   setHideCompleted: (hide: boolean) => void;
+  celebration: { enabled: boolean; style: string; intensity: string };
+  setCelebration: (patch: Partial<Pick<Settings, "celebration" | "celebration_style" | "celebration_intensity">>) => void;
 }
 
 // The key under which the browser storage kept "Hide completed" before it
@@ -59,6 +62,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       setNotesFont: (id: string) => update({ notes_font: id }),
       hideCompleted: settings.hide_completed ?? true,
       setHideCompleted: (hide: boolean) => update({ hide_completed: hide }),
+      celebration: {
+        enabled: settings.celebration ?? true,
+        style: celebrationStyle(settings.celebration_style).id,
+        intensity: intensity(settings.celebration_intensity).id,
+      },
+      setCelebration: update,
     }),
     [settings, update],
   );

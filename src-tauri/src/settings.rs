@@ -13,6 +13,15 @@ pub struct Settings {
     /// True to hide completed todos in the list; `None` for the default (true).
     #[serde(default)]
     pub hide_completed: Option<bool>,
+    /// True to celebrate completed todos and sub-tasks; `None` for the default (true).
+    #[serde(default)]
+    pub celebration: Option<bool>,
+    /// The id of the celebration style; `None` for the default.
+    #[serde(default)]
+    pub celebration_style: Option<String>,
+    /// The id of the celebration intensity; `None` for the default.
+    #[serde(default)]
+    pub celebration_intensity: Option<String>,
     /// Keys that this version does not know. They stay in the file.
     #[serde(flatten)]
     pub other: serde_json::Map<String, serde_json::Value>,
